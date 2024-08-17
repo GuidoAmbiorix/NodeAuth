@@ -7,6 +7,7 @@ import {
   UserEntity,
 } from "../../domain";
 import { Hash } from "crypto";
+import { UserMapper } from "../mappers/user.mapper";
 
 type HashFunction = (password: string) => string;
 type CompareFunction = (password: string, hashed: string) => boolean;
@@ -35,7 +36,8 @@ export class AuthDatasourceImpl implements AuthDatasource {
 
       await user.save();
 
-      return new UserEntity(user.id, name, email, user.password, user.roles);
+      // 3. Mapear la respuesta a nuestra entidad
+      return UserMapper.userEntityFromObject(user);
     } catch (error) {
       if (error instanceof CustomError) {
         throw error;

@@ -3,6 +3,7 @@ import { UserModel } from "../../data/mongodb";
 import {
   AuthDatasource,
   CustomError,
+  LoginUserDto,
   RegisterUserDto,
   UserEntity,
 } from "../../domain";
@@ -38,6 +39,28 @@ export class AuthDatasourceImpl implements AuthDatasource {
 
       // 3. Mapear la respuesta a nuestra entidad
       return UserMapper.userEntityFromObject(user);
+    } catch (error) {
+      if (error instanceof CustomError) {
+        throw error;
+      }
+      throw CustomError.internalServer();
+    }
+  }
+
+  async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+    const { email, password } = loginUserDto;
+    try {
+      // 1. verificar si el correo existe
+      const exists = await UserModel.findOne({ email });
+
+      if (!exists?.email) throw CustomError.badRequest("Invalid email");
+
+      // 2. verifico que la contrase;a es la misma
+      const isPasswordValid = this.comparePassword(password, exists?.password!);
+
+      if (!isPasswordValid) throw CustomError.badRequest("invalid Password ");
+
+      return UserMapper.userEntityFromObject(exists);
     } catch (error) {
       if (error instanceof CustomError) {
         throw error;
